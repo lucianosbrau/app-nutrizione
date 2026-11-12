@@ -1,7 +1,6 @@
 import { store } from "./state.js";
-import { enableDrag } from "./dnd.js";
 
-const VERSION = "1.2";
+const VERSION = "1.3";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -106,70 +105,44 @@ function renderPlanner() {
     const pairId = store.planning.days[i];
     const pair = store.pairs.find((p) => p.id === pairId);
     const day = document.createElement("div");
-    day.className = "day";
+    day.className = "day day-tappable";
     day.dataset.slot = i;
     day.innerHTML = `<div class="day-header"><span class="day-name">${name}</span></div>`;
     if (pair) day.appendChild(pairCard(pair));
     else day.insertAdjacentHTML("beforeend", `<div class="meal" style="color:var(--muted)">— vuoto —</div>`);
+    day.addEventListener("click", () => openDayPicker(i));
     grid.appendChild(day);
   });
+}
 
-  const pool = $("#planner-pool");
-  pool.innerHTML = "";
-  const used = new Set(store.planning.days);
-  const available = store.pairs.filter((p) => !used.has(p.id));
-  if (!available.length) {
-    pool.innerHTML = `<p class="hint">Nessuna card disponibile: sono tutte già nella settimana.</p>`;
-  }
-  available.forEach((p) => pool.appendChild(pairCard(p)));
-
-  enableDrag({
-    cards: [...grid.querySelectorAll(".card"), ...pool.querySelectorAll(".card")],
-    slots: [...grid.querySelectorAll(".day")],
-    pool,
-    onDrop: (pairId, slotIndex) => {
-      const days = store.planning.days;
-      const from = days.indexOf(pairId);
-      if (slotIndex === null) {
-        if (from >= 0) days[from] = null;
-      } else {
-        const prev = days[slotIndex];
-        days[slotIndex] = pairId;
-        if (from >= 0) days[from] = prev && prev !== pairId ? null : null;
-      }
-      store.save();
-      renderPlanner();
-    },
-    onTap: (pairId) => {
-      const pair = store.pairs.find((p) => p.id === pairId);
-      const days = store.planning.days;
-      askModal(
-        pair ? pair.label : "Sposta card",
-        "In quale giorno vuoi inserirla?",
-        DAYS.map((name, i) => ({
-          label: days[i] === pairId ? `${name} ✓` : name,
-          action: () => {
-            const from = days.indexOf(pairId);
-            const prev = days[i];
-            days[i] = pairId;
-            if (from >= 0) days[from] = null;
-            store.save();
-            renderPlanner();
-          },
-        })).concat([
-          {
-            label: "🗑️ Rimuovi",
-            action: () => {
-              const from = days.indexOf(pairId);
-              if (from >= 0) days[from] = null;
-              store.save();
-              renderPlanner();
+function openDayPicker(i) {
+  const days = store.planning.days;
+  const current = days[i];
+  askModal(
+    DAYS[i],
+    current ? "Sostituisci o rimuovi la card di questo giorno" : "Quale coppia vuoi inserire?",
+    store.pairs.map((p) => ({
+      label: `${days[i] === p.id ? "✓ " : ""}${p.label}`,
+      action: () => {
+        days[i] = p.id;
+        store.save();
+        renderPlanner();
+      },
+    })).concat(
+      current
+        ? [
+            {
+              label: "🗑️ Rimuovi card",
+              action: () => {
+                days[i] = null;
+                store.save();
+                renderPlanner();
+              },
             },
-          },
-        ])
-      );
-    },
-  });
+          ]
+        : []
+    )
+  );
 }
 
 function renderTables() {
