@@ -1,9 +1,66 @@
 {
   "tables": [
     {
-      "title": "Esempio di tabella",
-      "columns": ["Colonna 1", "Colonna 2"],
-      "rows": [["valore", "valore"]]
+      "title": "Equivalenti — Formaggi",
+      "columns": ["Base", "Equivale a", "Quantità"],
+      "rows": [
+        ["Mozzarella 80 gr", "Ricotta", "180 gr"],
+        ["", "Crescenza", "120 gr"],
+        ["", "Caciotta", "80 gr"],
+        ["", "Stracciata", "70 gr"],
+        ["Ricotta 100 gr", "Belpaese", "40 gr"],
+        ["", "Caciotta", "50 gr"],
+        ["", "Fior di latte", "50 gr"],
+        ["", "Provolone", "40 gr"],
+        ["", "Scamorza", "40 gr"],
+        ["", "Stracchino", "50 gr"]
+      ]
+    },
+    {
+      "title": "Equivalenti — Carni",
+      "columns": ["Base", "Equivale a", "Quantità"],
+      "rows": [
+        ["Vitello 100/150 gr", "Agnello", "60/90 gr"],
+        ["", "Coniglio", "80/120 gr"],
+        ["", "Maiale", "100/150 gr"],
+        ["", "Pollo", "100/150 gr"],
+        ["", "Tacchino", "80/120 gr"]
+      ]
+    },
+    {
+      "title": "Equivalenti — Pesce",
+      "columns": ["Base", "Equivale a", "Quantità"],
+      "rows": [
+        ["Merluzzo 100/150 gr", "Acciughe", "70/90 gr"],
+        ["", "Baccalà bagnato", "70/90 gr"],
+        ["", "Baccalà secco", "60/90 gr"],
+        ["", "Calamari", "100/150 gr"],
+        ["", "Carpa", "50/70 gr"],
+        ["", "Cefalo", "60/90 gr"],
+        ["", "Cozze", "90/130 gr"],
+        ["", "Dentice", "70/100 gr"],
+        ["", "Gambero", "60/90 gr"],
+        ["", "Palombo", "90/140 gr"],
+        ["", "Polpo", "110/160 gr"],
+        ["", "Razza", "100/150 gr"],
+        ["", "Rombo", "90/130 gr"],
+        ["", "Salmone", "40/70 gr"],
+        ["", "Seppie", "100/150 gr"],
+        ["", "Sogliola", "90/130 gr"],
+        ["", "Spigola", "90/130 gr"],
+        ["", "Tonno sott'olio", "35/60 gr"],
+        ["", "Trota", "70/100 gr"],
+        ["", "Vongole", "100/150 gr"]
+      ]
+    },
+    {
+      "title": "Equivalenti — Cereali",
+      "columns": ["Base", "Equivale a", "Quantità"],
+      "rows": [
+        ["Pasta di semola 70 gr", "Farro", "70 gr"],
+        ["", "Orzo perlato", "70 gr"],
+        ["", "Mais (farina)", "60 gr"]
+      ]
     }
   ]
 }

@@ -207,7 +207,7 @@ function init(defaults) {
   if (!store.activeWeek.days.some(Boolean)) {
     store.activeWeek = {
       startDate: mondayOf(new Date()).toISOString(),
-      days: defaults.pairs.map((p) => p.id),
+      days: defaults.pairs.slice(0, 7).map((p) => p.id),
       done: [],
     };
     store.save();
@@ -220,7 +220,7 @@ function init(defaults) {
   $("#btn-auto").addEventListener("click", () => {
     store.planning = {
       startDate: mondayOf(new Date()).toISOString(),
-      days: store.pairs.map((p) => p.id),
+      days: store.pairs.slice(0, 7).map((p) => p.id),
     };
     store.save();
     renderPlanner();
