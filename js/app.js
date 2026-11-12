@@ -564,4 +564,14 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
-loadDefaults().then(init);
+function blurActive() {
+  if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
+    document.activeElement.blur();
+  }
+}
+
+window.addEventListener("pageshow", blurActive);
+window.addEventListener("focusout", () => setTimeout(blurActive, 0));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) blurActive(); });
+
+loadDefaults().then(init).then(blurActive);
