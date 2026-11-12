@@ -245,7 +245,7 @@ th { background: var(--green-light); color: var(--green); }
 
 #modal .actions { margin-top: 12px; }
 
-.modal-close {
+.modal-box button.modal-close {
   position: absolute;
   top: 8px;
   right: 8px;
