@@ -1,0 +1,179 @@
+{
+  "pairs": [
+    {
+      "id": "lunedi",
+      "label": "Lunedì",
+      "lunch": {
+        "name": "Finocchio, pomodori, valeriana e 2 uova con pane",
+        "ingredients": [
+          { "name": "Finocchio", "qty": "100 gr" },
+          { "name": "Pomodori da insalata", "qty": "100 gr" },
+          { "name": "Valeriana", "qty": "100 gr" },
+          { "name": "Uova", "qty": "2 (120 gr)" },
+          { "name": "Pane di grano duro", "qty": "50 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Merluzzo (o altro pesce) con cicoria e pane",
+        "ingredients": [
+          { "name": "Merluzzo (o altro pesce)", "qty": "150 gr" },
+          { "name": "Cicoria", "qty": "100 gr" },
+          { "name": "Pane di grano duro", "qty": "40 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    },
+    {
+      "id": "martedi",
+      "label": "Martedì",
+      "lunch": {
+        "name": "Insalata lattuga, carote, pomodori e mozzarella con pane",
+        "ingredients": [
+          { "name": "Lattuga", "qty": "100 gr" },
+          { "name": "Carote", "qty": "100 gr" },
+          { "name": "Pomodori da insalata", "qty": "100 gr" },
+          { "name": "Mozzarella", "qty": "100 gr" },
+          { "name": "Pane di grano duro", "qty": "50 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Pollo con broccoletti di rape e pane",
+        "ingredients": [
+          { "name": "Pollo (petto, coscia o ali)", "qty": "150 gr" },
+          { "name": "Broccoletti di rape", "qty": "100 gr" },
+          { "name": "Pane di grano duro", "qty": "40 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    },
+    {
+      "id": "mercoledi",
+      "label": "Mercoledì",
+      "lunch": {
+        "name": "Riso con zucchine, carote e parmigiano",
+        "ingredients": [
+          { "name": "Zucchine", "qty": "100 gr" },
+          { "name": "Carote", "qty": "100 gr" },
+          { "name": "Riso brillato", "qty": "50 gr" },
+          { "name": "Parmigiano", "qty": "10 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Minestrone con bresaola e bieta",
+        "ingredients": [
+          { "name": "Verdura e legumi surgelati (minestrone o vellutata)", "qty": "100 gr" },
+          { "name": "Bresaola", "qty": "80 gr" },
+          { "name": "Bieta", "qty": "100 gr" },
+          { "name": "Pane di grano duro", "qty": "40 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    },
+    {
+      "id": "giovedi",
+      "label": "Giovedì",
+      "lunch": {
+        "name": "Insalata carote, scarola, finocchio e feta con pane",
+        "ingredients": [
+          { "name": "Carote", "qty": "100 gr" },
+          { "name": "Scarola", "qty": "100 gr" },
+          { "name": "Finocchio", "qty": "100 gr" },
+          { "name": "Feta", "qty": "80 gr" },
+          { "name": "Pane di grano duro", "qty": "50 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Tacchino con bieta e pane",
+        "ingredients": [
+          { "name": "Tacchino (petto)", "qty": "150 gr" },
+          { "name": "Bieta", "qty": "100 gr" },
+          { "name": "Pane di grano duro", "qty": "40 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    },
+    {
+      "id": "venerdi",
+      "label": "Venerdì",
+      "lunch": {
+        "name": "Insalata radicchio e pomodori con legumi e pane",
+        "ingredients": [
+          { "name": "Radicchio rosso", "qty": "100 gr" },
+          { "name": "Pomodori da insalata", "qty": "100 gr" },
+          { "name": "Fagioli in scatola (o ceci, lenticchie, piselli)", "qty": "140 gr" },
+          { "name": "Pane di grano duro", "qty": "40 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Pasta con zucchine e pomodoro",
+        "ingredients": [
+          { "name": "Zucchine", "qty": "100 gr" },
+          { "name": "Pasta di semola", "qty": "50 gr" },
+          { "name": "Parmigiano", "qty": "10 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    },
+    {
+      "id": "sabato",
+      "label": "Sabato (senza pizza)",
+      "lunch": {
+        "name": "Pasta di semola con lattuga e parmigiano",
+        "ingredients": [
+          { "name": "Lattuga", "qty": "100 gr" },
+          { "name": "Pasta di semola (o riso, orzo, farro)", "qty": "50 gr" },
+          { "name": "Parmigiano", "qty": "10 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Vitello con cavolfiore e pane",
+        "ingredients": [
+          { "name": "Cavolfiore", "qty": "100 gr" },
+          { "name": "Vitello (carne magra)", "qty": "150 gr" },
+          { "name": "Pane di grano duro", "qty": "40 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    },
+    {
+      "id": "sabato-pizza",
+      "label": "Sabato (pizza)",
+      "lunch": {
+        "name": "Minestrone con rucola e vitello",
+        "ingredients": [
+          { "name": "Verdura e legumi surgelati (minestrone)", "qty": "100 gr" },
+          { "name": "Rucola", "qty": "100 gr" },
+          { "name": "Vitello (carne magra)", "qty": "150 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Pizza con pomodoro e mozzarella",
+        "ingredients": [
+          { "name": "Pizza (qualsiasi tipo)", "qty": "300 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    },
+    {
+      "id": "domenica",
+      "label": "Domenica",
+      "lunch": {
+        "name": "Pasta di semola con valeriana e parmigiano",
+        "ingredients": [
+          { "name": "Valeriana", "qty": "100 gr" },
+          { "name": "Pasta di semola", "qty": "50 gr" },
+          { "name": "Parmigiano", "qty": "10 gr" }
+        ]
+      },
+      "dinner": {
+        "name": "Prosciutto con cavolo cappuccio e pane",
+        "ingredients": [
+          { "name": "Cavolo cappuccio verde", "qty": "100 gr" },
+          { "name": "Prosciutto crudo magro (o cotto o speck)", "qty": "80 gr" },
+          { "name": "Pane di grano duro", "qty": "40 gr" },
+          { "name": "Olio di oliva extravergine", "qty": "30 gr al giorno" }
+        ]
+      }
+    }
+  ]
+}
