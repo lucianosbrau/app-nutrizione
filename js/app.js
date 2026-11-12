@@ -163,6 +163,61 @@ function openDayPicker(i, target) {
   const week = isPlanning ? store.planning : store.activeWeek;
   const days = week.days;
   const current = days[i];
+  const afterChange = () => {
+    store.save();
+    if (isPlanning) renderPlanner();
+    else {
+      rebuildShoppingKeepingChecks();
+      store.save();
+      renderWeek();
+    }
+  };
+
+  if (!isPlanning) {
+    const dayChoices = days.map((pairId, j) => {
+      const pair = store.pairs.find((p) => p.id === pairId);
+      if (j === i || !pair) return null;
+      return {
+        label: `<strong>Scambia con ${DAYS[j]}</strong> — Card ${pair.label}<br><small>${pair.lunch.name} · ${pair.dinner.name}</small>`,
+        action: () => {
+          days[j] = current;
+          days[i] = pairId;
+          afterChange();
+        },
+      };
+    }).filter(Boolean);
+    const usedIds = new Set(days.filter(Boolean));
+    const unusedChoices = store.pairs
+      .filter((p) => !usedIds.has(p.id) && p.id !== current)
+      .map((p) => ({
+        label: `<strong>${p.label}</strong><br><small>${p.lunch.name} · ${p.dinner.name}</small>`,
+        action: () => {
+          days[i] = p.id;
+          afterChange();
+        },
+      }));
+    askModal(
+      DAYS[i],
+      current ? "Con quale giorno vuoi scambiarlo, o quale card vuoi inserire?" : "Quale card vuoi inserire?",
+      dayChoices
+        .concat(unusedChoices)
+        .concat(
+          current
+            ? [
+                {
+                  label: "🗑️ Lascia il giorno a riposo",
+                  action: () => {
+                    days[i] = null;
+                    afterChange();
+                  },
+                },
+              ]
+            : []
+        )
+    );
+    return;
+  }
+
   askModal(
     DAYS[i],
     current ? "Sostituisci o rimuovi la card di questo giorno" : "Quale coppia vuoi inserire?",
@@ -172,13 +227,7 @@ function openDayPicker(i, target) {
         const other = days.indexOf(p.id);
         if (other >= 0 && other !== i) days[other] = current;
         days[i] = p.id;
-        store.save();
-        if (isPlanning) renderPlanner();
-        else {
-          rebuildShoppingKeepingChecks();
-          store.save();
-          renderWeek();
-        }
+        afterChange();
       },
     })).concat(
       current
@@ -187,13 +236,7 @@ function openDayPicker(i, target) {
               label: "🗑️ Rimuovi card",
               action: () => {
                 days[i] = null;
-                store.save();
-                if (isPlanning) renderPlanner();
-                else {
-                  rebuildShoppingKeepingChecks();
-                  store.save();
-                  renderWeek();
-                }
+                afterChange();
               },
             },
           ]
