@@ -1,7 +1,7 @@
 import { store } from "./state.js";
 import { enableDrag } from "./dnd.js";
 
-const VERSION = "1.1";
+const VERSION = "1.2";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -37,14 +37,20 @@ function toast(msg) {
   toast._t = setTimeout(() => el.classList.add("hidden"), 2200);
 }
 
+function ingList(meal) {
+  return meal.ingredients
+    .map((ing) => `${ing.name} (${ing.qty})`)
+    .join(" · ");
+}
+
 function pairCard(pair) {
   const div = document.createElement("div");
   div.className = "card";
   div.dataset.pairId = pair.id;
   div.innerHTML = `
     <div class="card-title">${pair.label}</div>
-    <div class="card-meal">🍽️ ${pair.lunch.name}</div>
-    <div class="card-meal">🌙 ${pair.dinner.name}</div>`;
+    <div class="card-meal">🍽️ ${pair.lunch.name}<br><span class="card-ing">${ingList(pair.lunch)}</span></div>
+    <div class="card-meal">🌙 ${pair.dinner.name}<br><span class="card-ing">${ingList(pair.dinner)}</span></div>`;
   return div;
 }
 
@@ -76,8 +82,8 @@ function renderWeek() {
         </button>
       </div>
       ${pair ? `
-        <div class="meal"><span class="label">Pranzo</span>${pair.lunch.name}</div>
-        <div class="meal"><span class="label">Cena</span>${pair.dinner.name}</div>` : `<div class="meal" style="color:var(--muted)">Riposo</div>`}`;
+        <div class="meal"><span class="label">Pranzo</span>${pair.lunch.name}<br><span class="card-ing">${ingList(pair.lunch)}</span></div>
+        <div class="meal"><span class="label">Cena</span>${pair.dinner.name}<br><span class="card-ing">${ingList(pair.dinner)}</span></div>` : `<div class="meal" style="color:var(--muted)">Riposo</div>`}`;
     grid.appendChild(day);
   });
   grid.querySelectorAll(".done-toggle").forEach((btn) =>
@@ -217,6 +223,36 @@ const PIZZA_INGREDIENTS = [
   { name: "Mozzarella", qty: "250 gr" },
 ];
 
+function parseQty(qty) {
+  const m = String(qty).trim().match(/^(\d+)\s*(kg|gr|g|ml|l)\b/);
+  if (m) {
+    const n = +m[1];
+    const unit = m[2] === "g" ? "gr" : m[2];
+    return { n: unit === "kg" ? n * 1000 : unit === "l" ? n * 1000 : n, unit: unit === "kg" || unit === "l" ? "gr" : unit };
+  }
+  const p = String(qty).trim().match(/^(\d+)\s*\(/);
+  if (p) return { n: +p[1], unit: "pezzi" };
+  const c = String(qty).trim().match(/^(\d+)\s*cubetto/);
+  if (c) return { n: +c[1], unit: "cubetti" };
+  return null;
+}
+
+function aggregateQty(values) {
+  const parsed = values.map(parseQty);
+  if (parsed.length && parsed.every(Boolean)) {
+    const sums = new Map();
+    parsed.forEach((p) => sums.set(p.unit, (sums.get(p.unit) || 0) + p.n));
+    return [...sums.entries()]
+      .map(([unit, total]) =>
+        unit === "gr" && total >= 1000
+          ? `${(total / 1000).toLocaleString("it-IT")} kg`
+          : `${total} ${unit}`
+      )
+      .join(" + ");
+  }
+  return [...new Set(values)].join(" + ");
+}
+
 function buildShoppingList(week) {
   const map = new Map();
   const hasPizza = week.days.includes(PIZZA_PAIR_ID);
@@ -228,8 +264,8 @@ function buildShoppingList(week) {
         if (SHOPPING_EXCLUDED.some((x) => ing.name.toLowerCase().includes(x))) return;
         if (hasPizza && ing.name.toLowerCase().startsWith("pizza")) return;
         const key = ing.name.toLowerCase();
-        const cur = map.get(key) || { name: ing.name, qty: ing.qty, checked: false };
-        if (cur.qty !== ing.qty) cur.qty = `${cur.qty} + ${ing.qty}`;
+        const cur = map.get(key) || { name: ing.name, qtys: [], checked: false };
+        cur.qtys.push(ing.qty);
         map.set(key, cur);
       })
     );
@@ -237,10 +273,16 @@ function buildShoppingList(week) {
   if (hasPizza) {
     PIZZA_INGREDIENTS.forEach((ing) => {
       const key = ing.name.toLowerCase();
-      if (!map.has(key)) map.set(key, { ...ing, checked: false });
+      const cur = map.get(key) || { name: ing.name, qtys: [], checked: false };
+      cur.qtys.push(ing.qty);
+      map.set(key, cur);
     });
   }
-  return [...map.values()];
+  return [...map.values()].map(({ name, qtys, checked }) => ({
+    name,
+    qty: aggregateQty(qtys),
+    checked,
+  }));
 }
 
 function askModal(title, text, choices) {
