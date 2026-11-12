@@ -1,6 +1,6 @@
 import { store } from "./state.js";
 
-const VERSION = "1.3";
+const VERSION = "1.4";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -122,7 +122,7 @@ function openDayPicker(i) {
     DAYS[i],
     current ? "Sostituisci o rimuovi la card di questo giorno" : "Quale coppia vuoi inserire?",
     store.pairs.map((p) => ({
-      label: `${days[i] === p.id ? "✓ " : ""}${p.label}`,
+      label: `${days[i] === p.id ? "✓ " : ""}<strong>${p.label}</strong><br><small>${p.lunch.name} · ${p.dinner.name}</small>`,
       action: () => {
         days[i] = p.id;
         store.save();
@@ -265,7 +265,7 @@ function askModal(title, text, choices) {
   actions.innerHTML = "";
   choices.forEach((c) => {
     const btn = document.createElement("button");
-    btn.textContent = c.label;
+    btn.innerHTML = c.label;
     btn.addEventListener("click", () => {
       $("#modal").classList.add("hidden");
       c.action();
