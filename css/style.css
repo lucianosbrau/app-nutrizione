@@ -17,7 +17,7 @@ body {
   font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
-  padding-bottom: 110px;
+  padding-bottom: 150px;
 }
 
 header {
@@ -146,6 +146,8 @@ button:active { opacity: .8; }
 
 .menu-activate { width: 100%; margin-top: 4px; background: var(--green-light); color: var(--green); font-weight: 700; }
 
+#btn-shopping-clear { background: var(--danger); }
+
 #planner-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 
 table {
@@ -154,7 +156,7 @@ table {
   background: var(--card);
   border-radius: var(--radius);
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   font-size: .8rem;
 }
 

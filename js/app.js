@@ -1,6 +1,6 @@
 import { store } from "./state.js";
 
-const VERSION = "1.8";
+const VERSION = "1.9";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -14,6 +14,16 @@ async function loadDefaults() {
     menus: (await menusRes.json()).menus,
     tables: (await tablesRes.json()).tables,
   };
+}
+
+function defaultWeekOrder() {
+  const pairs = pairsOf(store.activeMenuId);
+  const saturday = pairs.find((p) => p.id === "sabato-pizza") || pairs.find((p) => p.id === "sabato");
+  return pairs
+    .filter((p) => p.id !== "sabato" && p.id !== "sabato-pizza")
+    .slice(0, 6)
+    .map((p) => p.id)
+    .reduce((acc, id, idx) => (idx === 5 ? acc.concat([saturday ? saturday.id : null, id]) : acc.concat([id])), []);
 }
 
 function pairsOf(menuId) {
@@ -491,7 +501,7 @@ function init(defaults) {
     store.activeWeek = {
       startDate: mondayOf(new Date()).toISOString(),
       menuId: store.activeMenuId,
-      days: pairsOf(store.activeMenuId).slice(0, 7).map((p) => p.id),
+      days: defaultWeekOrder(),
       done: [],
     };
     store.save();
@@ -511,27 +521,8 @@ function init(defaults) {
 
   $("#btn-auto").addEventListener("click", () => {
     const pairs = pairsOf(store.activeMenuId);
-    const variants = pairs.filter((p) => p.id === "sabato" || p.id === "sabato-pizza");
-    if (variants.length > 1) {
-      askModal(
-        "Compilazione automatica",
-        "Quale versione del sabato vuoi usare?",
-        [
-          {
-            label: "🍕 Con pizza",
-            action: () => autoFill("sabato-pizza"),
-          },
-          {
-            label: "🥗 Senza pizza",
-            action: () => autoFill("sabato"),
-          },
-        ]
-      );
-    } else if (variants.length === 1) {
-      autoFill(variants[0].id);
-    } else {
-      autoFill(null);
-    }
+    const defaultSaturday = pairs.find((p) => p.id === "sabato-pizza") || pairs.find((p) => p.id === "sabato");
+    autoFill(defaultSaturday ? defaultSaturday.id : null);
   });
 
   function autoFill(saturdayId) {
@@ -566,6 +557,13 @@ function init(defaults) {
     store.save();
     renderShopping();
     toast("Lista rigenerata");
+  });
+
+  $("#btn-shopping-clear").addEventListener("click", () => {
+    store.shopping = [];
+    store.save();
+    renderShopping();
+    toast("Lista della spesa cancellata");
   });
 
   $("#btn-shopping-export").addEventListener("click", async () => {
