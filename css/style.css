@@ -262,3 +262,17 @@ th { background: var(--green-light); color: var(--green); }
   align-items: center;
   justify-content: center;
 }
+
+.card-editable { cursor: pointer; }
+.card-editable:active { background: var(--green-light); }
+
+#modal-text .editor-meal { margin-bottom: 14px; text-align: left; }
+#modal-text .editor-label { display: block; font-weight: 700; font-size: .8rem; margin-bottom: 6px; }
+#modal-text .editor-name { width: 100%; font: inherit; font-size: .8rem; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 8px; box-sizing: border-box; }
+#modal-text .editor-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+#modal-text .editor-row .ing-name { flex: 2; min-width: 0; }
+#modal-text .editor-row .ing-qty { flex: 1; min-width: 0; width: 100%; }
+#modal-text .editor-row .ing-unit { flex: 1; min-width: 0; font-size: .75rem; padding: 9px 4px; border: 1px solid #ccc; border-radius: 8px; background: var(--card); }
+#modal-text .editor-row input { font: inherit; font-size: .8rem; padding: 9px; border: 1px solid #ccc; border-radius: 8px; }
+#modal-text .editor-row .ing-remove { width: 34px; height: 34px; border-radius: 50%; background: var(--bg); color: var(--danger); padding: 0; flex-shrink: 0; font-size: .8rem; }
+#modal-text .editor-add { width: 100%; background: var(--green-light); color: var(--green); font-size: .8rem; margin-top: 2px; }
