@@ -1,6 +1,7 @@
 import { store } from "./state.js";
 import { enableDrag } from "./dnd.js";
 
+const VERSION = "1.1";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -49,6 +50,11 @@ function pairCard(pair) {
 
 function renderWeek() {
   const week = store.activeWeek;
+  if (!week || !week.days.some(Boolean)) {
+    $("#week-title").textContent = "Settimana in corso";
+    $("#week-grid").innerHTML = `<p class="hint">Nessuna settimana attiva. Compila e valida il calendario nella sezione Programma.</p>`;
+    return;
+  }
   const start = mondayOf(week.startDate);
   $("#week-title").textContent = `Settimana in corso (${fmtDate(start)} — ${fmtDate(new Date(start.getTime() + 6 * 864e5))})`;
   const grid = $("#week-grid");
@@ -105,9 +111,11 @@ function renderPlanner() {
   const pool = $("#planner-pool");
   pool.innerHTML = "";
   const used = new Set(store.planning.days);
-  store.pairs
-    .filter((p) => !used.has(p.id))
-    .forEach((p) => pool.appendChild(pairCard(p)));
+  const available = store.pairs.filter((p) => !used.has(p.id));
+  if (!available.length) {
+    pool.innerHTML = `<p class="hint">Nessuna card disponibile: sono tutte già nella settimana.</p>`;
+  }
+  available.forEach((p) => pool.appendChild(pairCard(p)));
 
   enableDrag({
     cards: [...grid.querySelectorAll(".card"), ...pool.querySelectorAll(".card")],
@@ -182,7 +190,7 @@ function renderShopping() {
   ul.innerHTML = "";
   const items = store.shopping.filter((i) => !i.checked);
   if (!items.length) {
-    ul.innerHTML = `<p class="hint">Lista vuota. Genera la lista dalla settimana attiva o valida il calendario nella sezione Programma.</p>`;
+    ul.innerHTML = `<p class="hint">Nessun articolo nella lista della spesa. Tocca "Genera da settimana attiva" o valida il calendario nella sezione Programma.</p>`;
     return;
   }
   items.forEach((item) => {
@@ -267,7 +275,7 @@ function switchView(name) {
 function init(defaults) {
   store.init(defaults);
 
-  if (!store.activeWeek.days.some(Boolean)) {
+  if (!store.activeWeek || !store.activeWeek.days.some(Boolean)) {
     store.activeWeek = {
       startDate: mondayOf(new Date()).toISOString(),
       days: ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"],
@@ -359,6 +367,7 @@ function init(defaults) {
     }
   });
 
+  $("#app-version").textContent = `v${VERSION}`;
   switchView("week");
 }
 
