@@ -1,6 +1,6 @@
 import { store } from "./state.js";
 
-const VERSION = "1.7";
+const VERSION = "1.8";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -402,6 +402,15 @@ function buildShoppingList(week) {
   }));
 }
 
+let modalOpen = false;
+
+function hideModal() {
+  if (!modalOpen) return;
+  modalOpen = false;
+  $("#modal").classList.add("hidden");
+  history.back();
+}
+
 function askModal(title, text, choices) {
   $("#modal-title").textContent = title;
   $("#modal-text").textContent = text;
@@ -412,14 +421,37 @@ function askModal(title, text, choices) {
     btn.innerHTML = c.label;
     btn.addEventListener("click", () => {
       $("#modal").classList.add("hidden");
+      modalOpen = false;
+      history.back();
       c.action();
     });
     actions.appendChild(btn);
   });
+  const oldX = $("#modal .modal-close");
+  if (oldX) oldX.remove();
+  const x = document.createElement("button");
+  x.className = "modal-close";
+  x.textContent = "✕";
+  x.setAttribute("aria-label", "Chiudi");
+  x.addEventListener("click", hideModal);
+  $("#modal .modal-box").insertBefore(x, $("#modal .modal-box").firstChild);
+  modalOpen = true;
+  history.pushState({ modal: true }, "");
   $("#modal").classList.remove("hidden");
 }
 
-function switchView(name) {
+window.addEventListener("popstate", (e) => {
+  if (modalOpen) {
+    modalOpen = false;
+    $("#modal").classList.add("hidden");
+    return;
+  }
+  if (e.state && e.state.view) switchView(e.state.view, false);
+});
+
+function switchView(name, pushHistory = true) {
+  if (pushHistory) history.pushState({ view: name }, "");
+
   document.querySelectorAll(".view").forEach((v) => v.classList.add("hidden"));
   $(`#view-${name}`).classList.remove("hidden");
   document.querySelectorAll("#bottom-nav button").forEach((b) =>
