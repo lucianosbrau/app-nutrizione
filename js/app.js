@@ -1,6 +1,6 @@
 import { store } from "./state.js";
 
-const VERSION = "1.8";
+const VERSION = "1.10";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -14,6 +14,16 @@ async function loadDefaults() {
     menus: (await menusRes.json()).menus,
     tables: (await tablesRes.json()).tables,
   };
+}
+
+function defaultWeekOrder() {
+  const pairs = pairsOf(store.activeMenuId);
+  const saturday = pairs.find((p) => p.id === "sabato-pizza") || pairs.find((p) => p.id === "sabato");
+  return pairs
+    .filter((p) => p.id !== "sabato" && p.id !== "sabato-pizza")
+    .slice(0, 6)
+    .map((p) => p.id)
+    .reduce((acc, id, idx) => (idx === 5 ? acc.concat([saturday ? saturday.id : null, id]) : acc.concat([id])), []);
 }
 
 function pairsOf(menuId) {
@@ -285,8 +295,8 @@ function renderMenus() {
     const isActive = menu.id === store.activeMenuId;
     const body = `
       ${menu.pairs.map((p) => `
-        <div class="card">
-          <div class="card-title">${p.label}</div>
+        <div class="card card-editable" data-menu="${menu.id}" data-pair="${p.id}">
+          <div class="card-title">${p.label} <small style="font-weight:400;color:var(--muted)">✏️ modifica</small></div>
           <div class="card-meal">🍽️ ${p.lunch.name}</div>
           <div class="card-meal">🌙 ${p.dinner.name}</div>
         </div>`).join("")}
@@ -297,6 +307,9 @@ function renderMenus() {
       false
     ));
   });
+  c.querySelectorAll(".card-editable").forEach((card) =>
+    card.addEventListener("click", () => openCardEditor(card.dataset.menu, card.dataset.pair))
+  );
   c.querySelectorAll(".menu-activate").forEach((btn) =>
     btn.addEventListener("click", () => {
       store.activeMenuId = btn.dataset.menu;
@@ -306,6 +319,113 @@ function renderMenus() {
       toast("Menu di default aggiornato: la programmazione ora usa il nuovo menu");
     })
   );
+}
+
+const UNITS = ["gr", "ml", "kg", "l", "pezzi", "cubetti", "q.b."];
+
+function splitQty(qty) {
+  const m = String(qty || "").trim().match(/^(\d+)\s*(kg|gr|g|ml|l|pezzi|cubetti)\b/);
+  if (m) return { n: m[1], unit: m[2] === "g" ? "gr" : m[2] };
+  if (/^\d+\s*\(/.test(String(qty || "").trim())) {
+    const p = String(qty).match(/^(\d+)/);
+    return { n: p[1], unit: "pezzi" };
+  }
+  if (/q\.b\./.test(String(qty || ""))) return { n: "", unit: "q.b." };
+  return { n: "", unit: "" };
+}
+
+function composeQty(n, unit) {
+  if (unit === "q.b.") return "q.b.";
+  if (!unit) return n || "";
+  return `${n || ""} ${unit}`.trim();
+}
+
+function openCardEditor(menuId, pairId) {
+  const menu = store.menus.find((m) => m.id === menuId);
+  const pair = menu && menu.pairs.find((p) => p.id === pairId);
+  if (!pair) return;
+
+  const mealBlock = (meal, mealKey) => `
+    <div class="editor-meal">
+      <label class="editor-label">${mealKey === "lunch" ? "🍽️ Pranzo" : "🌙 Cena"}</label>
+      <input type="text" class="editor-name" data-meal="${mealKey}" value="${pair[mealKey].name}" autocomplete="off">
+      <div class="editor-ings" data-meal="${mealKey}">
+        ${pair[mealKey].ingredients.map((ing, idx) => ingRow(ing, mealKey, idx)).join("")}
+      </div>
+      <button class="editor-add" data-meal="${mealKey}">+ Aggiungi ingrediente</button>
+    </div>`;
+
+  const ingRow = (ing, mealKey, idx) => {
+    const { n, unit } = splitQty(ing.qty);
+    return `
+      <div class="editor-row">
+        <input type="text" class="ing-name" placeholder="Ingrediente" value="${ing.name}" autocomplete="off">
+        <input type="text" inputmode="numeric" class="ing-qty" placeholder="Qtà" value="${n}" autocomplete="off">
+        <select class="ing-unit">
+          ${UNITS.map((u) => `<option value="${u}" ${u === unit ? "selected" : ""}>${u}</option>`).join("")}
+          <option value="" ${!unit ? "selected" : ""}>altro</option>
+        </select>
+        <button class="ing-remove" aria-label="Rimuovi">✕</button>
+      </div>`;
+  };
+
+  $("#modal-title").textContent = `Modifica card ${pair.label}`;
+  $("#modal-text").innerHTML = mealBlock(pair.lunch, "lunch") + mealBlock(pair.dinner, "dinner");
+  const actions = $("#modal-actions");
+  actions.innerHTML = "";
+
+  const save = document.createElement("button");
+  save.textContent = "💾 Salva modifiche";
+  save.addEventListener("click", () => {
+    const readMeal = (mealKey) => {
+      const name = $(`#modal-text .editor-name[data-meal="${mealKey}"]`).value.trim();
+      const ingredients = [...$(`#modal-text .editor-ings[data-meal="${mealKey}"]`).querySelectorAll(".editor-row")]
+        .map((row) => ({
+          name: row.querySelector(".ing-name").value.trim(),
+          qty: composeQty(row.querySelector(".ing-qty").value.trim(), row.querySelector(".ing-unit").value),
+        }))
+        .filter((ing) => ing.name);
+      return { name, ingredients };
+    };
+    pair.lunch = readMeal("lunch");
+    pair.dinner = readMeal("dinner");
+    store.menusDirty = true;
+    store.save();
+    $("#modal").classList.add("hidden");
+    modalOpen = false;
+    history.back();
+    renderMenus();
+    toast("Card aggiornata");
+  });
+  actions.appendChild(save);
+
+  $("#modal-text").querySelectorAll(".editor-add").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const mealKey = btn.dataset.meal;
+      const empty = { name: "", qty: "" };
+      const holder = $(`#modal-text .editor-ings[data-meal="${mealKey}"]`);
+      holder.insertAdjacentHTML("beforeend", ingRow(empty, mealKey, -1));
+      wireRow(holder.lastElementChild);
+    })
+  );
+
+  const wireRow = (row) => {
+    row.querySelector(".ing-remove").addEventListener("click", () => row.remove());
+  };
+  $("#modal-text").querySelectorAll(".editor-row").forEach(wireRow);
+
+  const oldX = $("#modal .modal-close");
+  if (oldX) oldX.remove();
+  const x = document.createElement("button");
+  x.className = "modal-close";
+  x.textContent = "✕";
+  x.setAttribute("aria-label", "Chiudi");
+  x.addEventListener("click", hideModal);
+  $("#modal .modal-box").insertBefore(x, $("#modal .modal-box").firstChild);
+
+  modalOpen = true;
+  history.pushState({ modal: true }, "");
+  $("#modal").classList.remove("hidden");
 }
 
 function renderShopping() {
@@ -491,7 +611,7 @@ function init(defaults) {
     store.activeWeek = {
       startDate: mondayOf(new Date()).toISOString(),
       menuId: store.activeMenuId,
-      days: pairsOf(store.activeMenuId).slice(0, 7).map((p) => p.id),
+      days: defaultWeekOrder(),
       done: [],
     };
     store.save();
@@ -511,27 +631,8 @@ function init(defaults) {
 
   $("#btn-auto").addEventListener("click", () => {
     const pairs = pairsOf(store.activeMenuId);
-    const variants = pairs.filter((p) => p.id === "sabato" || p.id === "sabato-pizza");
-    if (variants.length > 1) {
-      askModal(
-        "Compilazione automatica",
-        "Quale versione del sabato vuoi usare?",
-        [
-          {
-            label: "🍕 Con pizza",
-            action: () => autoFill("sabato-pizza"),
-          },
-          {
-            label: "🥗 Senza pizza",
-            action: () => autoFill("sabato"),
-          },
-        ]
-      );
-    } else if (variants.length === 1) {
-      autoFill(variants[0].id);
-    } else {
-      autoFill(null);
-    }
+    const defaultSaturday = pairs.find((p) => p.id === "sabato-pizza") || pairs.find((p) => p.id === "sabato");
+    autoFill(defaultSaturday ? defaultSaturday.id : null);
   });
 
   function autoFill(saturdayId) {
@@ -566,6 +667,13 @@ function init(defaults) {
     store.save();
     renderShopping();
     toast("Lista rigenerata");
+  });
+
+  $("#btn-shopping-clear").addEventListener("click", () => {
+    store.shopping = [];
+    store.save();
+    renderShopping();
+    toast("Lista della spesa cancellata");
   });
 
   $("#btn-shopping-export").addEventListener("click", async () => {
