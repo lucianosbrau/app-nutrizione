@@ -239,13 +239,16 @@ function parseQty(qty) {
 
 function aggregateQty(values) {
   const parsed = values.map(parseQty);
-  if (parsed.every(Boolean) && parsed.length) {
-    const unit = parsed[0].unit;
-    if (parsed.every((p) => p.unit === unit)) {
-      const total = parsed.reduce((s, p) => s + p.n, 0);
-      if (unit === "gr" && total >= 1000) return `${(total / 1000).toLocaleString("it-IT")} kg`;
-      return `${total} ${unit}`;
-    }
+  if (parsed.length && parsed.every(Boolean)) {
+    const sums = new Map();
+    parsed.forEach((p) => sums.set(p.unit, (sums.get(p.unit) || 0) + p.n));
+    return [...sums.entries()]
+      .map(([unit, total]) =>
+        unit === "gr" && total >= 1000
+          ? `${(total / 1000).toLocaleString("it-IT")} kg`
+          : `${total} ${unit}`
+      )
+      .join(" + ");
   }
   return [...new Set(values)].join(" + ");
 }
