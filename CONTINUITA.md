@@ -69,9 +69,9 @@ Requisiti originali:
 
 ## 6. Stato attuale (aggiornare a ogni consegna)
 
-- Versione app: **1.7** — cache service worker **nutrizione-v8**
-- PR fuse: #1–#9. PR in volo al momento della scrittura: **#10** (menu mensili + storico + fix tastiera) — se alla ripresa risulta non fusa, farne il merge col proprietario.
-- Funzioni attive: settimana attuale/prossima con accoriani e scambio card, spunta pasti, rollover lunedì, programmazione prossima settimana, tabelle equivalenti, spesa aggregata con esportazione, storico menu con attivazione manuale, banner nuovo menu.
+- Versione app: **1.8** — cache service worker **nutrizione-v9**
+- PR fuse: #1–#10. PR in volo al momento della scrittura: **#11** (documentazione) e **#12** (chiusura finestre con ✕ + tasto BACK che naviga le viste invece di uscire dall'app) — se non fuse, farne il merge col proprietario.
+- Funzioni attive: settimana attuale/prossima con accoriani e scambio card, spunta pasti, rollover lunedì, programmazione prossima settimana, tabelle equivalenti, spesa aggregata con esportazione, storico menu con attivazione manuale, banner nuovo menu, chiusura finestre con ✕ e tasto BACK che naviga la cronologia delle viste (non esce dall'app).
 - Font: si è scelto di **rimandare** la decisione (candidate: Nunito, Poppins, Inter, Manrope — self-hosted per restare offline). Idee di design di riferimento: schermate "foodvisor" (sfondi pastello per sezione, card bianche arrotondate, accenti teal) — la cartella Drive contiene la foto di riferimento.
 - Idee parcheggiate: export/import backup JSON dei dati; tema scuro; grafica foodvisor.
 
