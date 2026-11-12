@@ -189,3 +189,27 @@ th { background: var(--green-light); color: var(--green); }
   transition: opacity .3s;
 }
 #toast.hidden { opacity: 0; pointer-events: none; }
+
+#modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  padding: 24px;
+}
+
+#modal.hidden { display: none; }
+
+.modal-box {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0,0,0,.3);
+}
+
+#modal .actions { margin-top: 12px; }

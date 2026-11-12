@@ -172,13 +172,24 @@ function renderShopping() {
   });
 }
 
+const SHOPPING_EXCLUDED = ["olio di oliva"];
+const PIZZA_PAIR_ID = "sabato-pizza";
+const PIZZA_INGREDIENTS = [
+  { name: "Farina", qty: "1 kg" },
+  { name: "Lievito di birra fresco", qty: "1 cubetto" },
+  { name: "Mozzarella", qty: "250 gr" },
+];
+
 function buildShoppingList(week) {
   const map = new Map();
+  const hasPizza = week.days.includes(PIZZA_PAIR_ID);
   week.days.forEach((pairId) => {
     const pair = store.pairs.find((p) => p.id === pairId);
     if (!pair) return;
     [pair.lunch, pair.dinner].forEach((meal) =>
       meal.ingredients.forEach((ing) => {
+        if (SHOPPING_EXCLUDED.some((x) => ing.name.toLowerCase().includes(x))) return;
+        if (hasPizza && ing.name.toLowerCase().startsWith("pizza")) return;
         const key = ing.name.toLowerCase();
         const cur = map.get(key) || { name: ing.name, qty: ing.qty, checked: false };
         if (cur.qty !== ing.qty) cur.qty = `${cur.qty} + ${ing.qty}`;
@@ -186,7 +197,30 @@ function buildShoppingList(week) {
       })
     );
   });
+  if (hasPizza) {
+    PIZZA_INGREDIENTS.forEach((ing) => {
+      const key = ing.name.toLowerCase();
+      if (!map.has(key)) map.set(key, { ...ing, checked: false });
+    });
+  }
   return [...map.values()];
+}
+
+function askModal(title, text, choices) {
+  $("#modal-title").textContent = title;
+  $("#modal-text").textContent = text;
+  const actions = $("#modal-actions");
+  actions.innerHTML = "";
+  choices.forEach((c) => {
+    const btn = document.createElement("button");
+    btn.textContent = c.label;
+    btn.addEventListener("click", () => {
+      $("#modal").classList.add("hidden");
+      c.action();
+    });
+    actions.appendChild(btn);
+  });
+  $("#modal").classList.remove("hidden");
 }
 
 function switchView(name) {
@@ -207,7 +241,7 @@ function init(defaults) {
   if (!store.activeWeek.days.some(Boolean)) {
     store.activeWeek = {
       startDate: mondayOf(new Date()).toISOString(),
-      days: defaults.pairs.slice(0, 7).map((p) => p.id),
+      days: ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"],
       done: [],
     };
     store.save();
@@ -218,14 +252,32 @@ function init(defaults) {
   );
 
   $("#btn-auto").addEventListener("click", () => {
+    askModal(
+      "Compilazione automatica",
+      "Quale versione del sabato vuoi usare?",
+      [
+        {
+          label: "🍕 Con pizza",
+          action: () => autoFill("sabato-pizza"),
+        },
+        {
+          label: "🥗 Senza pizza",
+          action: () => autoFill("sabato"),
+        },
+      ]
+    );
+  });
+
+  function autoFill(saturdayId) {
+    const order = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", saturdayId, "domenica"];
     store.planning = {
       startDate: mondayOf(new Date()).toISOString(),
-      days: store.pairs.slice(0, 7).map((p) => p.id),
+      days: order,
     };
     store.save();
     renderPlanner();
-    toast("Settimana compilata automaticamente: puoi spostare le card");
-  });
+    toast("Settimana compilata: puoi spostare le card");
+  }
 
   $("#btn-manual").addEventListener("click", () => {
     store.planning = {

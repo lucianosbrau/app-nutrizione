@@ -4,7 +4,8 @@
       "title": "Equivalenti — Formaggi",
       "columns": ["Base", "Equivale a", "Quantità"],
       "rows": [
-        ["Mozzarella 80 gr", "Ricotta", "180 gr"],
+        ["Mozzarella 80 gr", "Jocca", "180 gr"],
+        ["", "Ricotta", "140 gr"],
         ["", "Crescenza", "120 gr"],
         ["", "Caciotta", "80 gr"],
         ["", "Stracciata", "70 gr"],
