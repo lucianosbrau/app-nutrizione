@@ -1,0 +1,9 @@
+{
+  "tables": [
+    {
+      "title": "Esempio di tabella",
+      "columns": ["Colonna 1", "Colonna 2"],
+      "rows": [["valore", "valore"]]
+    }
+  ]
+}

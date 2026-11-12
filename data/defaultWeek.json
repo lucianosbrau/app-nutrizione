@@ -1,0 +1,46 @@
+{
+  "pairs": [
+    {
+      "id": "lun",
+      "label": "Coppia lunedì",
+      "lunch": { "name": "Pranzo del lunedì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] },
+      "dinner": { "name": "Cena del lunedì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] }
+    },
+    {
+      "id": "mar",
+      "label": "Coppia martedì",
+      "lunch": { "name": "Pranzo del martedì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] },
+      "dinner": { "name": "Cena del martedì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] }
+    },
+    {
+      "id": "mer",
+      "label": "Coppia mercoledì",
+      "lunch": { "name": "Pranzo del mercoledì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] },
+      "dinner": { "name": "Cena del mercoledì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] }
+    },
+    {
+      "id": "gio",
+      "label": "Coppia giovedì",
+      "lunch": { "name": "Pranzo del giovedì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] },
+      "dinner": { "name": "Cena del giovedì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] }
+    },
+    {
+      "id": "ven",
+      "label": "Coppia venerdì",
+      "lunch": { "name": "Pranzo del venerdì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] },
+      "dinner": { "name": "Cena del venerdì", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] }
+    },
+    {
+      "id": "sab",
+      "label": "Coppia sabato",
+      "lunch": { "name": "Pranzo del sabato", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] },
+      "dinner": { "name": "Cena del sabato", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] }
+    },
+    {
+      "id": "dom",
+      "label": "Coppia domenica",
+      "lunch": { "name": "Pranzo della domenica", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] },
+      "dinner": { "name": "Cena della domenica", "ingredients": [{ "name": "ingrediente", "qty": "q.b." }] }
+    }
+  ]
+}
