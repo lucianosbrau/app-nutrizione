@@ -126,6 +126,35 @@ function renderPlanner() {
       store.save();
       renderPlanner();
     },
+    onTap: (pairId) => {
+      const pair = store.pairs.find((p) => p.id === pairId);
+      const days = store.planning.days;
+      askModal(
+        pair ? pair.label : "Sposta card",
+        "In quale giorno vuoi inserirla?",
+        DAYS.map((name, i) => ({
+          label: days[i] === pairId ? `${name} ✓` : name,
+          action: () => {
+            const from = days.indexOf(pairId);
+            const prev = days[i];
+            days[i] = pairId;
+            if (from >= 0) days[from] = null;
+            store.save();
+            renderPlanner();
+          },
+        })).concat([
+          {
+            label: "🗑️ Rimuovi",
+            action: () => {
+              const from = days.indexOf(pairId);
+              if (from >= 0) days[from] = null;
+              store.save();
+              renderPlanner();
+            },
+          },
+        ])
+      );
+    },
   });
 }
 
