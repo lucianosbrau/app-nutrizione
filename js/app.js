@@ -53,38 +53,68 @@ function pairCard(pair) {
   return div;
 }
 
-function renderWeek() {
-  const week = store.activeWeek;
-  if (!week || !week.days.some(Boolean)) {
-    $("#week-title").textContent = "Settimana in corso";
-    $("#week-grid").innerHTML = `<p class="hint">Nessuna settimana attiva. Compila e valida il calendario nella sezione Programma.</p>`;
-    return;
-  }
+function weekDaysHtml(week, withToggles) {
   const start = mondayOf(week.startDate);
-  $("#week-title").textContent = `Settimana in corso (${fmtDate(start)} — ${fmtDate(new Date(start.getTime() + 6 * 864e5))})`;
-  const grid = $("#week-grid");
-  grid.innerHTML = "";
-  DAYS.forEach((name, i) => {
+  return DAYS.map((name, i) => {
     const pairId = week.days[i];
     const pair = store.pairs.find((p) => p.id === pairId);
     const dayDate = new Date(start.getTime() + i * 864e5);
     const isToday = mondayOf(new Date()).getTime() === start.getTime() &&
       new Date().getDay() === ((i + 1) % 7);
-    const done = week.done.includes(i);
-    const day = document.createElement("div");
-    day.className = "day" + (done ? " done" : "");
-    day.innerHTML = `
+    const done = withToggles && week.done.includes(i);
+    return `<div class="day" style="margin-bottom:10px" ${done ? 'data-done="1"' : ""}>
       <div class="day-header">
         <span class="day-name">${name} ${dayDate.getDate()}/${dayDate.getMonth() + 1}${isToday ? " • oggi" : ""}</span>
-        <button class="done-toggle ${done ? "checked" : ""}" data-day="${i}">
-          ${done ? "Fatto ✓" : "Segna fatto"}
-        </button>
+        ${withToggles ? `<button class="done-toggle ${done ? "checked" : ""}" data-day="${i}">${done ? "Fatto ✓" : "Segna fatto"}</button>` : ""}
       </div>
       ${pair ? `
         <div class="meal"><span class="label">Pranzo</span>${pair.lunch.name}<br><span class="card-ing">${ingList(pair.lunch)}</span></div>
-        <div class="meal"><span class="label">Cena</span>${pair.dinner.name}<br><span class="card-ing">${ingList(pair.dinner)}</span></div>` : `<div class="meal" style="color:var(--muted)">Riposo</div>`}`;
-    grid.appendChild(day);
+        <div class="meal"><span class="label">Cena</span>${pair.dinner.name}<br><span class="card-ing">${ingList(pair.dinner)}</span></div>` : `<div class="meal" style="color:var(--muted)">Riposo</div>`}
+    </div>`;
+  }).join("");
+}
+
+function accordion(title, bodyHtml, open, empty) {
+  const box = document.createElement("div");
+  box.className = "accordion";
+  box.innerHTML = `
+    <button class="acc-header">${title} <span class="acc-arrow">${open ? "▲" : "▼"}</span></button>
+    <div class="acc-body ${open ? "" : "hidden"}">${empty || bodyHtml}</div>`;
+  box.querySelector(".acc-header").addEventListener("click", () => {
+    const body = box.querySelector(".acc-body");
+    const isHidden = body.classList.toggle("hidden");
+    box.querySelector(".acc-arrow").textContent = isHidden ? "▼" : "▲";
   });
+  return box;
+}
+
+function renderWeek() {
+  const grid = $("#week-grid");
+  grid.innerHTML = "";
+
+  const week = store.activeWeek;
+  if (week && week.days.some(Boolean)) {
+    const start = mondayOf(week.startDate);
+    grid.appendChild(accordion(
+      `📅 Settimana attuale (${fmtDate(start)} — ${fmtDate(new Date(start.getTime() + 6 * 864e5))})`,
+      weekDaysHtml(week, true),
+      true
+    ));
+  } else {
+    grid.appendChild(accordion("📅 Settimana attuale", "", true,
+      `<p class="hint">Nessuna settimana attiva. Compila la prossima settimana nella sezione Programma.</p>`));
+  }
+
+  const next = store.planning;
+  if (next && next.days.some(Boolean)) {
+    const start = mondayOf(next.startDate);
+    grid.appendChild(accordion(
+      `🗓️ Prossima settimana (${fmtDate(start)} — ${fmtDate(new Date(start.getTime() + 6 * 864e5))})`,
+      weekDaysHtml(next, false),
+      false
+    ));
+  }
+
   grid.querySelectorAll(".done-toggle").forEach((btn) =>
     btn.addEventListener("click", () => {
       const i = +btn.dataset.day;
@@ -287,6 +317,26 @@ function switchView(name) {
   if (name === "shopping") renderShopping();
 }
 
+function nextMonday() {
+  const m = mondayOf(new Date());
+  return new Date(m.getTime() + 7 * 864e5);
+}
+
+function rolloverIfNeeded() {
+  const thisMonday = mondayOf(new Date()).getTime();
+  const activeStart = store.activeWeek ? mondayOf(store.activeWeek.startDate).getTime() : null;
+  if (activeStart === null || activeStart >= thisMonday) return;
+  if (store.activeWeek.days.some(Boolean)) store.history.push(store.activeWeek);
+  if (store.planning.days.some(Boolean)) {
+    store.activeWeek = { ...store.planning, done: [] };
+    store.shopping = buildShoppingList(store.activeWeek);
+  } else {
+    store.activeWeek = { startDate: new Date(thisMonday).toISOString(), days: Array(7).fill(null), done: [] };
+  }
+  store.planning = { startDate: nextMonday().toISOString(), days: Array(7).fill(null) };
+  store.save();
+}
+
 function init(defaults) {
   store.init(defaults);
 
@@ -298,6 +348,11 @@ function init(defaults) {
     };
     store.save();
   }
+  if (!store.planning || !store.planning.days) {
+    store.planning = { startDate: nextMonday().toISOString(), days: Array(7).fill(null) };
+    store.save();
+  }
+  rolloverIfNeeded();
 
   document.querySelectorAll("#bottom-nav button").forEach((b) =>
     b.addEventListener("click", () => switchView(b.dataset.view))
@@ -323,36 +378,22 @@ function init(defaults) {
   function autoFill(saturdayId) {
     const order = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", saturdayId, "domenica"];
     store.planning = {
-      startDate: mondayOf(new Date()).toISOString(),
+      startDate: nextMonday().toISOString(),
       days: order,
     };
     store.save();
     renderPlanner();
-    toast("Settimana compilata: puoi spostare le card");
+    toast("Prossima settimana compilata");
   }
 
   $("#btn-manual").addEventListener("click", () => {
     store.planning = {
-      startDate: mondayOf(new Date()).toISOString(),
+      startDate: nextMonday().toISOString(),
       days: Array(7).fill(null),
     };
     store.save();
     renderPlanner();
-    toast("Compilazione manuale: trascina le card dai giorni disponibili");
-  });
-
-  $("#btn-activate").addEventListener("click", () => {
-    if (!store.planning.days.some(Boolean)) {
-      toast("Nessun pasto programmato");
-      return;
-    }
-    store.history.push(store.activeWeek);
-    store.activeWeek = { ...store.planning, done: [] };
-    store.shopping = buildShoppingList(store.activeWeek);
-    store.planning = { startDate: store.activeWeek.startDate, days: Array(7).fill(null) };
-    store.save();
-    toast("Settimana validata! Lista della spesa generata");
-    switchView("week");
+    toast("Prossima settimana svuotata: tocca i giorni per compilare");
   });
 
   $("#btn-shopping-build").addEventListener("click", () => {
