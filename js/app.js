@@ -1,6 +1,6 @@
 import { store } from "./state.js";
 
-const VERSION = "1.5";
+const VERSION = "1.6";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -53,7 +53,7 @@ function pairCard(pair) {
   return div;
 }
 
-function weekDaysHtml(week, withToggles) {
+function weekDaysHtml(week, withToggles, editable) {
   const start = mondayOf(week.startDate);
   return DAYS.map((name, i) => {
     const pairId = week.days[i];
@@ -62,7 +62,7 @@ function weekDaysHtml(week, withToggles) {
     const isToday = mondayOf(new Date()).getTime() === start.getTime() &&
       new Date().getDay() === ((i + 1) % 7);
     const done = withToggles && week.done.includes(i);
-    return `<div class="day" style="margin-bottom:10px" ${done ? 'data-done="1"' : ""}>
+    return `<div class="day${editable ? " day-tappable" : ""}" style="margin-bottom:10px" ${done ? 'data-done="1"' : ""} ${editable ? `data-day="${i}"` : ""}>
       <div class="day-header">
         <span class="day-name">${name} ${dayDate.getDate()}/${dayDate.getMonth() + 1}${isToday ? " • oggi" : ""}</span>
         ${withToggles ? `<button class="done-toggle ${done ? "checked" : ""}" data-day="${i}">${done ? "Fatto ✓" : "Segna fatto"}</button>` : ""}
@@ -97,7 +97,7 @@ function renderWeek() {
     const start = mondayOf(week.startDate);
     grid.appendChild(accordion(
       `📅 Settimana attuale (${fmtDate(start)} — ${fmtDate(new Date(start.getTime() + 6 * 864e5))})`,
-      weekDaysHtml(week, true),
+      weekDaysHtml(week, true, true),
       true
     ));
   } else {
@@ -116,7 +116,8 @@ function renderWeek() {
   }
 
   grid.querySelectorAll(".done-toggle").forEach((btn) =>
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
       const i = +btn.dataset.day;
       const done = store.activeWeek.done;
       const idx = done.indexOf(i);
@@ -125,6 +126,10 @@ function renderWeek() {
       store.save();
       renderWeek();
     })
+  );
+
+  grid.querySelectorAll("#week-grid > .accordion:first-child .day-tappable").forEach((day) =>
+    day.addEventListener("click", () => openDayPicker(+day.dataset.day, "active"))
   );
 }
 
@@ -140,23 +145,89 @@ function renderPlanner() {
     day.innerHTML = `<div class="day-header"><span class="day-name">${name}</span></div>`;
     if (pair) day.appendChild(pairCard(pair));
     else day.insertAdjacentHTML("beforeend", `<div class="meal" style="color:var(--muted)">— vuoto —</div>`);
-    day.addEventListener("click", () => openDayPicker(i));
+    day.addEventListener("click", () => openDayPicker(i, "planning"));
     grid.appendChild(day);
   });
 }
 
-function openDayPicker(i) {
-  const days = store.planning.days;
+function rebuildShoppingKeepingChecks() {
+  const checkedNames = new Set(store.shopping.filter((i) => i.checked).map((i) => i.name.toLowerCase()));
+  store.shopping = buildShoppingList(store.activeWeek).map((i) => ({
+    ...i,
+    checked: checkedNames.has(i.name.toLowerCase()),
+  }));
+}
+
+function openDayPicker(i, target) {
+  const isPlanning = target === "planning";
+  const week = isPlanning ? store.planning : store.activeWeek;
+  const days = week.days;
   const current = days[i];
+  const afterChange = () => {
+    store.save();
+    if (isPlanning) renderPlanner();
+    else {
+      rebuildShoppingKeepingChecks();
+      store.save();
+      renderWeek();
+    }
+  };
+
+  if (!isPlanning) {
+    const dayChoices = days.map((pairId, j) => {
+      const pair = store.pairs.find((p) => p.id === pairId);
+      if (j === i || !pair) return null;
+      return {
+        label: `<strong>Scambia con ${DAYS[j]}</strong> — Card ${pair.label}<br><small>${pair.lunch.name} · ${pair.dinner.name}</small>`,
+        action: () => {
+          days[j] = current;
+          days[i] = pairId;
+          afterChange();
+        },
+      };
+    }).filter(Boolean);
+    const usedIds = new Set(days.filter(Boolean));
+    const unusedChoices = store.pairs
+      .filter((p) => !usedIds.has(p.id) && p.id !== current)
+      .map((p) => ({
+        label: `<strong>${p.label}</strong><br><small>${p.lunch.name} · ${p.dinner.name}</small>`,
+        action: () => {
+          days[i] = p.id;
+          afterChange();
+        },
+      }));
+    askModal(
+      DAYS[i],
+      current ? "Con quale giorno vuoi scambiarlo, o quale card vuoi inserire?" : "Quale card vuoi inserire?",
+      dayChoices
+        .concat(unusedChoices)
+        .concat(
+          current
+            ? [
+                {
+                  label: "🗑️ Lascia il giorno a riposo",
+                  action: () => {
+                    days[i] = null;
+                    afterChange();
+                  },
+                },
+              ]
+            : []
+        )
+    );
+    return;
+  }
+
   askModal(
     DAYS[i],
     current ? "Sostituisci o rimuovi la card di questo giorno" : "Quale coppia vuoi inserire?",
     store.pairs.map((p) => ({
       label: `${days[i] === p.id ? "✓ " : ""}<strong>${p.label}</strong><br><small>${p.lunch.name} · ${p.dinner.name}</small>`,
       action: () => {
+        const other = days.indexOf(p.id);
+        if (other >= 0 && other !== i) days[other] = current;
         days[i] = p.id;
-        store.save();
-        renderPlanner();
+        afterChange();
       },
     })).concat(
       current
@@ -165,8 +236,7 @@ function openDayPicker(i) {
               label: "🗑️ Rimuovi card",
               action: () => {
                 days[i] = null;
-                store.save();
-                renderPlanner();
+                afterChange();
               },
             },
           ]
