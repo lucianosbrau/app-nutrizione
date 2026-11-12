@@ -17,7 +17,7 @@ body {
   font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
-  padding-bottom: 76px;
+  padding-bottom: 110px;
 }
 
 header {
@@ -121,6 +121,29 @@ button:active { opacity: .8; }
 .day-tappable { cursor: pointer; }
 .day-tappable:active { background: var(--green-light); }
 
+.accordion { margin-bottom: 14px; }
+
+.acc-header {
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  color: var(--text);
+  font-size: .9rem;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.acc-arrow { font-size: .75rem; color: var(--muted); }
+
+.acc-body { padding-top: 10px; }
+
+.acc-body.hidden { display: none; }
+
 #planner-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 
 table {
@@ -129,7 +152,7 @@ table {
   background: var(--card);
   border-radius: var(--radius);
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   font-size: .8rem;
 }
 
