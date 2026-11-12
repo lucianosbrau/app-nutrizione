@@ -1,11 +1,11 @@
-const CACHE = "nutrizione-v7";
+const CACHE = "nutrizione-v8";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
   "./js/state.js",
-  "./data/defaultWeek.json",
+  "./data/menus.json",
   "./data/tables.json",
   "./icons/icon.svg",
   "./manifest.webmanifest",

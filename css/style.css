@@ -144,6 +144,8 @@ button:active { opacity: .8; }
 
 .acc-body.hidden { display: none; }
 
+.menu-activate { width: 100%; margin-top: 4px; background: var(--green-light); color: var(--green); font-weight: 700; }
+
 #planner-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 
 table {

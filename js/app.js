@@ -1,19 +1,28 @@
 import { store } from "./state.js";
 
-const VERSION = "1.6";
+const VERSION = "1.7";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
 
 async function loadDefaults() {
-  const [weekRes, tablesRes] = await Promise.all([
-    fetch("data/defaultWeek.json"),
+  const [menusRes, tablesRes] = await Promise.all([
+    fetch("data/menus.json"),
     fetch("data/tables.json"),
   ]);
   return {
-    pairs: (await weekRes.json()).pairs,
+    menus: (await menusRes.json()).menus,
     tables: (await tablesRes.json()).tables,
   };
+}
+
+function pairsOf(menuId) {
+  const menu = store.menus.find((m) => m.id === (menuId || store.activeMenuId));
+  return menu ? menu.pairs : [];
+}
+
+function menuOf(week) {
+  return (week && week.menuId) || store.activeMenuId;
 }
 
 function mondayOf(date) {
@@ -57,7 +66,7 @@ function weekDaysHtml(week, withToggles, editable) {
   const start = mondayOf(week.startDate);
   return DAYS.map((name, i) => {
     const pairId = week.days[i];
-    const pair = store.pairs.find((p) => p.id === pairId);
+    const pair = pairsOf(menuOf(week)).find((p) => p.id === pairId);
     const dayDate = new Date(start.getTime() + i * 864e5);
     const isToday = mondayOf(new Date()).getTime() === start.getTime() &&
       new Date().getDay() === ((i + 1) % 7);
@@ -91,6 +100,11 @@ function accordion(title, bodyHtml, open, empty) {
 function renderWeek() {
   const grid = $("#week-grid");
   grid.innerHTML = "";
+
+  if (store.menus.some((m) => m.id !== store.activeMenuId)) {
+    grid.insertAdjacentHTML("afterbegin",
+      `<p class="hint" style="background:var(--green-light);padding:10px 14px;border-radius:var(--radius);margin-bottom:10px">📌 È disponibile un nuovo menu: attivalo quando vuoi dalla sezione Menu.</p>`);
+  }
 
   const week = store.activeWeek;
   if (week && week.days.some(Boolean)) {
@@ -138,7 +152,7 @@ function renderPlanner() {
   grid.innerHTML = "";
   DAYS.forEach((name, i) => {
     const pairId = store.planning.days[i];
-    const pair = store.pairs.find((p) => p.id === pairId);
+    const pair = pairsOf(menuOf(store.planning)).find((p) => p.id === pairId);
     const day = document.createElement("div");
     day.className = "day day-tappable";
     day.dataset.slot = i;
@@ -175,7 +189,7 @@ function openDayPicker(i, target) {
 
   if (!isPlanning) {
     const dayChoices = days.map((pairId, j) => {
-      const pair = store.pairs.find((p) => p.id === pairId);
+      const pair = pairsOf(menuOf(week)).find((p) => p.id === pairId);
       if (j === i || !pair) return null;
       return {
         label: `<strong>Scambia con ${DAYS[j]}</strong> — Card ${pair.label}<br><small>${pair.lunch.name} · ${pair.dinner.name}</small>`,
@@ -187,7 +201,7 @@ function openDayPicker(i, target) {
       };
     }).filter(Boolean);
     const usedIds = new Set(days.filter(Boolean));
-    const unusedChoices = store.pairs
+    const unusedChoices = pairsOf(menuOf(week))
       .filter((p) => !usedIds.has(p.id) && p.id !== current)
       .map((p) => ({
         label: `<strong>${p.label}</strong><br><small>${p.lunch.name} · ${p.dinner.name}</small>`,
@@ -221,7 +235,7 @@ function openDayPicker(i, target) {
   askModal(
     DAYS[i],
     current ? "Sostituisci o rimuovi la card di questo giorno" : "Quale coppia vuoi inserire?",
-    store.pairs.map((p) => ({
+    pairsOf(menuOf(week)).map((p) => ({
       label: `${days[i] === p.id ? "✓ " : ""}<strong>${p.label}</strong><br><small>${p.lunch.name} · ${p.dinner.name}</small>`,
       action: () => {
         const other = days.indexOf(p.id);
@@ -262,6 +276,36 @@ function renderTables() {
       <tbody>${t.rows.map((r) => `<tr>${r.map((v) => `<td>${v}</td>`).join("")}</tr>`).join("")}</tbody>`;
     c.appendChild(table);
   });
+}
+
+function renderMenus() {
+  const c = $("#menus-container");
+  c.innerHTML = "";
+  [...store.menus].reverse().forEach((menu) => {
+    const isActive = menu.id === store.activeMenuId;
+    const body = `
+      ${menu.pairs.map((p) => `
+        <div class="card">
+          <div class="card-title">${p.label}</div>
+          <div class="card-meal">🍽️ ${p.lunch.name}</div>
+          <div class="card-meal">🌙 ${p.dinner.name}</div>
+        </div>`).join("")}
+      ${isActive ? "" : `<button class="menu-activate" data-menu="${menu.id}">Imposta come menu di default</button>`}`;
+    c.appendChild(accordion(
+      `${menu.name}${isActive ? " ✓ attivo" : ""}`,
+      body,
+      false
+    ));
+  });
+  c.querySelectorAll(".menu-activate").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      store.activeMenuId = btn.dataset.menu;
+      store.planning = { startDate: nextMonday().toISOString(), menuId: store.activeMenuId, days: Array(7).fill(null) };
+      store.save();
+      renderMenus();
+      toast("Menu di default aggiornato: la programmazione ora usa il nuovo menu");
+    })
+  );
 }
 
 function renderShopping() {
@@ -330,7 +374,7 @@ function buildShoppingList(week) {
   const map = new Map();
   const hasPizza = week.days.includes(PIZZA_PAIR_ID);
   week.days.forEach((pairId) => {
-    const pair = store.pairs.find((p) => p.id === pairId);
+    const pair = pairsOf(menuOf(week)).find((p) => p.id === pairId);
     if (!pair) return;
     [pair.lunch, pair.dinner].forEach((meal) =>
       meal.ingredients.forEach((ing) => {
@@ -385,6 +429,7 @@ function switchView(name) {
   if (name === "planner") renderPlanner();
   if (name === "tables") renderTables();
   if (name === "shopping") renderShopping();
+  if (name === "menus") renderMenus();
 }
 
 function nextMonday() {
@@ -401,9 +446,9 @@ function rolloverIfNeeded() {
     store.activeWeek = { ...store.planning, done: [] };
     store.shopping = buildShoppingList(store.activeWeek);
   } else {
-    store.activeWeek = { startDate: new Date(thisMonday).toISOString(), days: Array(7).fill(null), done: [] };
+    store.activeWeek = { startDate: new Date(thisMonday).toISOString(), menuId: store.activeMenuId, days: Array(7).fill(null), done: [] };
   }
-  store.planning = { startDate: nextMonday().toISOString(), days: Array(7).fill(null) };
+  store.planning = { startDate: nextMonday().toISOString(), menuId: store.activeMenuId, days: Array(7).fill(null) };
   store.save();
 }
 
@@ -413,15 +458,19 @@ function init(defaults) {
   if (!store.activeWeek || !store.activeWeek.days.some(Boolean)) {
     store.activeWeek = {
       startDate: mondayOf(new Date()).toISOString(),
-      days: ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"],
+      menuId: store.activeMenuId,
+      days: pairsOf(store.activeMenuId).slice(0, 7).map((p) => p.id),
       done: [],
     };
     store.save();
   }
   if (!store.planning || !store.planning.days) {
-    store.planning = { startDate: nextMonday().toISOString(), days: Array(7).fill(null) };
+    store.planning = { startDate: nextMonday().toISOString(), menuId: store.activeMenuId, days: Array(7).fill(null) };
     store.save();
   }
+  if (store.activeWeek && !store.activeWeek.menuId) store.activeWeek.menuId = store.activeMenuId;
+  if (store.planning && !store.planning.menuId) store.planning.menuId = store.activeMenuId;
+  store.history.forEach((w) => { if (!w.menuId) w.menuId = store.activeMenuId; });
   rolloverIfNeeded();
 
   document.querySelectorAll("#bottom-nav button").forEach((b) =>
@@ -429,27 +478,40 @@ function init(defaults) {
   );
 
   $("#btn-auto").addEventListener("click", () => {
-    askModal(
-      "Compilazione automatica",
-      "Quale versione del sabato vuoi usare?",
-      [
-        {
-          label: "🍕 Con pizza",
-          action: () => autoFill("sabato-pizza"),
-        },
-        {
-          label: "🥗 Senza pizza",
-          action: () => autoFill("sabato"),
-        },
-      ]
-    );
+    const pairs = pairsOf(store.activeMenuId);
+    const variants = pairs.filter((p) => p.id === "sabato" || p.id === "sabato-pizza");
+    if (variants.length > 1) {
+      askModal(
+        "Compilazione automatica",
+        "Quale versione del sabato vuoi usare?",
+        [
+          {
+            label: "🍕 Con pizza",
+            action: () => autoFill("sabato-pizza"),
+          },
+          {
+            label: "🥗 Senza pizza",
+            action: () => autoFill("sabato"),
+          },
+        ]
+      );
+    } else if (variants.length === 1) {
+      autoFill(variants[0].id);
+    } else {
+      autoFill(null);
+    }
   });
 
   function autoFill(saturdayId) {
-    const order = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", saturdayId, "domenica"];
+    const pairs = pairsOf(store.activeMenuId);
+    const others = pairs.filter((p) => p.id !== "sabato" && p.id !== "sabato-pizza").map((p) => p.id);
+    const days = others.slice(0, 5)
+      .concat(saturdayId ? [saturdayId] : [])
+      .concat(others.slice(5));
     store.planning = {
       startDate: nextMonday().toISOString(),
-      days: order,
+      menuId: store.activeMenuId,
+      days,
     };
     store.save();
     renderPlanner();
@@ -459,6 +521,7 @@ function init(defaults) {
   $("#btn-manual").addEventListener("click", () => {
     store.planning = {
       startDate: nextMonday().toISOString(),
+      menuId: store.activeMenuId,
       days: Array(7).fill(null),
     };
     store.save();
@@ -501,4 +564,14 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
-loadDefaults().then(init);
+function blurActive() {
+  if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
+    document.activeElement.blur();
+  }
+}
+
+window.addEventListener("pageshow", blurActive);
+window.addEventListener("focusout", () => setTimeout(blurActive, 0));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) blurActive(); });
+
+loadDefaults().then(init).then(blurActive);

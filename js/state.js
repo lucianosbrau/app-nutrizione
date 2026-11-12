@@ -9,7 +9,7 @@ function load() {
 }
 
 export const store = {
-  pairs: [],
+  menus: [],
   tables: [],
   activeWeek: null,
   planning: null,
@@ -18,7 +18,8 @@ export const store = {
 
   init(defaults) {
     const saved = load();
-    this.pairs = defaults.pairs;
+    this.menus = defaults.menus;
+    this.activeMenuId = saved.activeMenuId || (this.menus[0] && this.menus[0].id);
     this.tables = defaults.tables;
     this.activeWeek = saved.activeWeek || null;
     this.history = saved.history || [];
@@ -30,6 +31,7 @@ export const store = {
     localStorage.setItem(
       KEY,
       JSON.stringify({
+        activeMenuId: this.activeMenuId,
         activeWeek: this.activeWeek,
         planning: this.planning,
         history: this.history,
