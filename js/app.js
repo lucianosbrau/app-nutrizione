@@ -732,6 +732,23 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
+async function checkForUpdate() {
+  if (location.protocol !== "https:") return;
+  try {
+    const res = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
+    const { version } = await res.json();
+    if (version !== VERSION && !sessionStorage.getItem("updating")) {
+      sessionStorage.setItem("updating", "1");
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.update();
+      location.reload();
+    }
+  } catch (e) {}
+}
+
+checkForUpdate();
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkForUpdate(); });
+
 function blurActive() {
   if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
     document.activeElement.blur();
@@ -742,4 +759,7 @@ window.addEventListener("pageshow", blurActive);
 window.addEventListener("focusout", () => setTimeout(blurActive, 0));
 document.addEventListener("visibilitychange", () => { if (!document.hidden) blurActive(); });
 
-loadDefaults().then(init).then(blurActive);
+loadDefaults()
+  .then(init)
+  .then(blurActive)
+  .then(() => sessionStorage.removeItem("updating"));
