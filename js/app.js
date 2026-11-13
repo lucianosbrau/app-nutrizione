@@ -1,6 +1,6 @@
 import { store } from "./state.js";
 
-const VERSION = "1.10";
+const VERSION = "1.11";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
