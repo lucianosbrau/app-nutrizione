@@ -41,7 +41,7 @@ Requisiti originali:
 4. Il proprietario verifica sul telefono guardando la versione mostrata nell'header (es. `v1.7`).
 
 **Convenzioni tecniche obbligatorie:**
-- A ogni modifica funzionale: bumpare `VERSION` in `js/app.js` **e** `CACHE` in `sw.js`. Se il bump va perso in un merge (conflitto di riga), le PWA installate continuano a servire la versione vecchia: è già successo (PR #7/#8), fare attenzione.
+- A ogni modifica funzionale: bumpare `VERSION` in `js/app.js`, `CACHE` in `sw.js` **e** la `version` in `version.json` (il file serve al controllo di auto-aggiornamento: l'app lo interroga a ogni apertura e, se il server ha una versione diversa, forza l'aggiornamento del service worker e si ricarica). Se il bump va perso in un merge (conflitto di riga), le PWA installate continuano a servire la versione vecchia: è già successo (PR #7/#8), fare attenzione.
 - Service worker cache-first: senza cambio di `CACHE` gli utenti installati non vedono gli update.
 - Nessun commento nel codice; stile esistente; nessuna dipendenza nuova.
 - Messaggi UI in italiano, tono semplice.
