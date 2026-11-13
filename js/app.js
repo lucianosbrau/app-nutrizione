@@ -1,6 +1,6 @@
 import { store } from "./state.js";
 
-const VERSION = "1.11";
+const VERSION = "1.12";
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 const $ = (sel) => document.querySelector(sel);
@@ -444,6 +444,7 @@ function renderShopping() {
       <span class="qty">${item.qty}</span>`;
     li.querySelector("input").addEventListener("change", () => {
       item.checked = true;
+      store.shoppingUndo.push(item.name);
       store.save();
       li.classList.add("removing");
       setTimeout(renderShopping, 350);
@@ -664,13 +665,40 @@ function init(defaults) {
 
   $("#btn-shopping-build").addEventListener("click", () => {
     store.shopping = buildShoppingList(store.activeWeek);
+    store.shoppingUndo = [];
     store.save();
     renderShopping();
     toast("Lista rigenerata");
   });
 
+  $("#btn-shopping-next").addEventListener("click", () => {
+    if (!store.planning.days.some(Boolean)) {
+      toast("La prossima settimana non è ancora programmata");
+      return;
+    }
+    store.shopping = buildShoppingList(store.planning);
+    store.shoppingUndo = [];
+    store.save();
+    renderShopping();
+    toast("Lista generata dalla prossima settimana");
+  });
+
+  $("#btn-shopping-undo").addEventListener("click", () => {
+    const lastName = store.shoppingUndo.pop();
+    if (!lastName) {
+      toast("Nessuna spunta da annullare");
+      return;
+    }
+    const item = store.shopping.find((i) => i.name.toLowerCase() === lastName.toLowerCase());
+    if (item) item.checked = false;
+    store.save();
+    renderShopping();
+    toast(`Rimesso in lista: ${lastName}`);
+  });
+
   $("#btn-shopping-clear").addEventListener("click", () => {
     store.shopping = [];
+    store.shoppingUndo = [];
     store.save();
     renderShopping();
     toast("Lista della spesa cancellata");
@@ -704,6 +732,23 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
+async function checkForUpdate() {
+  if (location.protocol !== "https:") return;
+  try {
+    const res = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
+    const { version } = await res.json();
+    if (version !== VERSION && !sessionStorage.getItem("updating")) {
+      sessionStorage.setItem("updating", "1");
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.update();
+      location.reload();
+    }
+  } catch (e) {}
+}
+
+checkForUpdate();
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkForUpdate(); });
+
 function blurActive() {
   if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
     document.activeElement.blur();
@@ -714,4 +759,7 @@ window.addEventListener("pageshow", blurActive);
 window.addEventListener("focusout", () => setTimeout(blurActive, 0));
 document.addEventListener("visibilitychange", () => { if (!document.hidden) blurActive(); });
 
-loadDefaults().then(init).then(blurActive);
+loadDefaults()
+  .then(init)
+  .then(blurActive)
+  .then(() => sessionStorage.removeItem("updating"));

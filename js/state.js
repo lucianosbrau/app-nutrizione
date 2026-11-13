@@ -15,6 +15,7 @@ export const store = {
   planning: null,
   history: [],
   shopping: [],
+  shoppingUndo: [],
 
   init(defaults) {
     const saved = load();
@@ -30,6 +31,7 @@ export const store = {
     this.activeWeek = saved.activeWeek || null;
     this.history = saved.history || [];
     this.shopping = saved.shopping || [];
+    this.shoppingUndo = saved.shoppingUndo || [];
     this.planning = saved.planning || { startDate: new Date().toISOString(), days: Array(7).fill(null) };
   },
 
@@ -43,6 +45,7 @@ export const store = {
         planning: this.planning,
         history: this.history,
         shopping: this.shopping,
+        shoppingUndo: this.shoppingUndo,
       })
     );
   },
